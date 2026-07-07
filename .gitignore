@@ -1,0 +1,14 @@
+# build output
+/adk-tinker
+/bin/
+
+# local secrets
+.env
+.env.local
+
+# durable session stores (durablehitl, serve)
+*.db
+*.db-*
+
+# go
+/vendor/
