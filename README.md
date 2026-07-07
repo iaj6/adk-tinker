@@ -3,7 +3,7 @@
 Kicking the tires on [ADK for Go 2.0](https://developers.googleblog.com/announcing-adk-go-20/)
 (`google.golang.org/adk/v2`, released 2026-06-30).
 
-Eleven runnable programs, each a step up in ADK 2.0 features:
+Twelve runnable programs, each a step up in ADK 2.0 features:
 
 | Command | What it is |
 |---------|------------|
@@ -18,6 +18,7 @@ Eleven runnable programs, each a step up in ADK 2.0 features:
 | `go run ./claudetools` | **tool calling on Claude** — the `add` function tool, driven by Claude through the same adapter |
 | `go run ./claudesearch "topic"` | **search-grounded Claude** — `geminitool.GoogleSearch{}` auto-mapped to Anthropic's `web_search` |
 | `go run ./a2amesh "question"` | **cross-provider mesh** — a Claude orchestrator delegates to a Gemini specialist over A2A |
+| `go run ./adk46 "peak"` | **ADK × ADK** 🏔️ — use the *Agent* Development Kit to plan a hike in the *Adirondacks* |
 
 ## Hello agent
 
@@ -264,6 +265,30 @@ A2A `server`/`remoteagent` wiring. Claude emits a `tool_use` for `gemini_special
 ADK routes it over A2A to the Gemini agent; the answer returns as a `tool_result`;
 Claude synthesizes. (If the free-tier Gemini quota is exhausted, Claude degrades
 gracefully — it reports the specialist was unreachable rather than failing.)
+
+## ADK × ADK — plan a High Peaks hike (`adk46/`)
+
+A little word-play: use the **A**gent **D**evelopment **K**it to bag the **ADK**
+(the Adirondacks) — the [46 High Peaks](https://en.wikipedia.org/wiki/Adirondack_High_Peaks).
+A team of Adirondack scout agents fans out to research a peak **in parallel**
+(each grounded on live web search), a "head guide" agent synthesizes a trip
+brief, and *you* — the hiker — approve, edit, or scrap it.
+
+```
+  🗺️ route_scout ─┐
+Start ─ ⛅ sky_watcher ─┼─ gather ─ format ─ 🏔️ head_guide ─ review (you)
+  🎒 pack_master  ─┘  (Join)  (func)     (LLM)          (HITL)
+```
+
+```bash
+export ANTHROPIC_API_KEY=...     # runs entirely on Claude
+go run ./adk46 "Mount Marcy — a day hike this weekend"
+```
+
+It's the whole toolkit wearing an Adirondack hat: **fan-out/fan-in**,
+**search-grounded Claude** (each scout's `geminitool.GoogleSearch{}` → Anthropic
+`web_search`), an LLM **synthesizer**, and a **HITL** approval — and the output is
+genuinely useful (it'll catch a summit snow forecast or a closed trail).
 
 ## Anatomy (the v2 pieces)
 
