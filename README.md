@@ -3,7 +3,7 @@
 Kicking the tires on [ADK for Go 2.0](https://developers.googleblog.com/announcing-adk-go-20/)
 (`google.golang.org/adk/v2`, released 2026-06-30).
 
-Twelve runnable programs, each a step up in ADK 2.0 features:
+Fifteen runnable programs, each a step up in ADK 2.0 features:
 
 | Command | What it is |
 |---------|------------|
@@ -19,6 +19,9 @@ Twelve runnable programs, each a step up in ADK 2.0 features:
 | `go run ./claudesearch "topic"` | **search-grounded Claude** — `geminitool.GoogleSearch{}` auto-mapped to Anthropic's `web_search` |
 | `go run ./a2amesh "question"` | **cross-provider mesh** — a Claude orchestrator delegates to a Gemini specialist over A2A |
 | `go run ./adk46 "peak"` | **ADK × ADK** 🏔️ — use the *Agent* Development Kit to plan a hike in the *Adirondacks* |
+| `go run ./adk46er bag/list/next` | **durable 46er tracker** — log peaks (SQLite), see progress, ask a Claude mentor for your next |
+| `go run ./rangerguide "question"` | **ranger↔guide mesh** — a Claude guide consults a Gemini "park ranger" over A2A |
+| `go run ./whichpeak "profile"` | **Trailhead Oracle** — a search-grounded Claude pick for which peak to hike today |
 
 ## Hello agent
 
@@ -289,6 +292,17 @@ It's the whole toolkit wearing an Adirondack hat: **fan-out/fan-in**,
 **search-grounded Claude** (each scout's `geminitool.GoogleSearch{}` → Anthropic
 `web_search`), an LLM **synthesizer**, and a **HITL** approval — and the output is
 genuinely useful (it'll catch a summit snow forecast or a closed trail).
+
+Three companions round out the ADK × ADK corner, each foregrounding a different
+capability:
+
+- **`adk46er`** — a **durable** 46er tracker: `bag "Marcy"`, `list` your progress
+  toward 46 (persisted in SQLite), and `next` asks a Claude mentor which peak to
+  do next given what you've bagged.
+- **`rangerguide`** — the **cross-provider A2A mesh**, themed: a Claude "trail
+  guide" consults a Gemini "park ranger" (regulations) over A2A, then advises.
+- **`whichpeak`** — a **search-grounded** "Trailhead Oracle": give it your fitness
+  and time; it checks the forecast and recommends a peak for today.
 
 ## Anatomy (the v2 pieces)
 
