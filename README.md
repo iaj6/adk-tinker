@@ -3,7 +3,7 @@
 Kicking the tires on [ADK for Go 2.0](https://developers.googleblog.com/announcing-adk-go-20/)
 (`google.golang.org/adk/v2`, released 2026-06-30).
 
-Fifteen runnable programs, each a step up in ADK 2.0 features:
+Sixteen runnable programs, each a step up in ADK 2.0 features:
 
 | Command | What it is |
 |---------|------------|
@@ -22,6 +22,7 @@ Fifteen runnable programs, each a step up in ADK 2.0 features:
 | `go run ./adk46er bag/list/next` | **durable 46er tracker** — log peaks (SQLite), see progress, ask a Claude mentor for your next |
 | `go run ./rangerguide "question"` | **ranger↔guide mesh** — a Claude guide consults a Gemini "park ranger" over A2A |
 | `go run ./whichpeak "profile"` | **Trailhead Oracle** — a search-grounded Claude pick for which peak to hike today |
+| `go run ./eval` | **LLM-as-judge eval harness** — score an agent's answers against rubrics (the Dev UI "Evals" tab is a 501 stub in Go v2.0.0) |
 
 ## Hello agent
 
@@ -303,6 +304,37 @@ capability:
   guide" consults a Gemini "park ranger" (regulations) over A2A, then advises.
 - **`whichpeak`** — a **search-grounded** "Trailhead Oracle": give it your fitness
   and time; it checks the forecast and recommends a peak for today.
+
+## Evaluating agents — an LLM-as-judge harness (`eval/`)
+
+ADK 2.0's Dev UI has an **Evals** tab, but in Go v2.0.0 the backend's eval REST
+endpoints are stubs (`controllers.Unimplemented` → HTTP 501) and there's no public
+eval package. So `eval/` is a DIY harness in the spirit of the upstream
+`examples/web/agents/llmauditor.go` (an LLM critic + reviser).
+
+For each case it produces a recommendation (running the agent-under-test, or a
+planted `ForceOutput`), then a **panel of judge agents** (different Claude models)
+scores it against the case rubric and returns JSON `{pass, score, rationale}`; the
+panel majority-votes. The demo evaluates an Adirondack peak recommender against
+hiker-profile rubrics.
+
+Two things keep it honest rather than a rubber stamp — both came out of an
+**adversarial review of the harness itself** (see the review-workflow pattern
+above), which found that a naïve 5/5 pass rate proves nothing:
+
+- a **negative control** — a planted, dangerous recommendation the judges *must*
+  fail, so an always-pass judge is caught instead of rewarded; and
+- a **judge panel** (`opus-4-8` + `sonnet-5` + `haiku-4-5`) with majority vote, so
+  one lenient/noisy judge can't decide a case.
+
+```bash
+export ANTHROPIC_API_KEY=...      # all agents run on Claude
+go run ./eval                      # exits non-zero if the panel contests a labeled verdict
+```
+
+It has teeth: a sample run rejected the negative control 3/3, and flagged a real
+borderline — a peak recommended for a 2-hour window that actually needs 3–4 hours.
+`parseVerdict` / `vote` are unit-tested.
 
 ## Anatomy (the v2 pieces)
 
