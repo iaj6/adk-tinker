@@ -3,7 +3,7 @@
 Kicking the tires on [ADK for Go 2.0](https://developers.googleblog.com/announcing-adk-go-20/)
 (`google.golang.org/adk/v2`, released 2026-06-30).
 
-Sixteen runnable programs, each a step up in ADK 2.0 features:
+Seventeen runnable programs, each a step up in ADK 2.0 features:
 
 | Command | What it is |
 |---------|------------|
@@ -23,6 +23,7 @@ Sixteen runnable programs, each a step up in ADK 2.0 features:
 | `go run ./rangerguide "question"` | **ranger↔guide mesh** — a Claude guide consults a Gemini "park ranger" over A2A |
 | `go run ./whichpeak "profile"` | **Trailhead Oracle** — a search-grounded Claude pick for which peak to hike today |
 | `go run ./eval` | **LLM-as-judge eval harness** — score an agent's answers against rubrics (the Dev UI "Evals" tab is a 501 stub in Go v2.0.0) |
+| `go run ./loopcritic "peak"` | **self-critique loop** — a `LoopAgent` where a safety critic keeps sending the plan back until it passes, then `exit_loop`s |
 
 ## Hello agent
 
@@ -335,6 +336,39 @@ go run ./eval                      # exits non-zero if the panel contests a labe
 It has teeth: a sample run rejected the negative control 3/3, and flagged a real
 borderline — a peak recommended for a 2-hour window that actually needs 3–4 hours.
 `parseVerdict` / `vote` are unit-tested.
+
+## Self-critique loop (`loopcritic/`)
+
+The counterpart to `eval/`: there a judge grades an agent from the **outside**;
+here a critic lives **inside** the agent and it self-corrects until it passes.
+
+Built on ADK's **loop agent** (`agent/workflowagents/loopagent`), which runs its
+sub-agents in sequence and repeats up to `MaxIterations` — or until a sub-agent
+*escalates*:
+
+```
+┌──────────────── loop (≤ 4 iterations) ─────────────────┐
+│  ✍️  planner  → drafts / revises the trip plan          │
+│  🔍 safety_critic → PASS? call exit_loop (escalate→stop)│
+│                     FAIL? numbered critique → next round │
+└─────────────────────────────────────────────────────────┘
+```
+
+The critic holds the `tool/exitlooptool` tool; calling `exit_loop` sets
+`Actions().Escalate = true`, which the loop detects to stop early. That tool call
+runs through the Claude `model.LLM` adapter's tool-calling path — so this also
+exercises `claudemodel`'s function calling.
+
+```bash
+export ANTHROPIC_API_KEY=...
+go run ./loopcritic "Algonquin Peak, day hike, this weekend"
+```
+
+A sample run: draft v1 is a rough sketch → the critic rejects it with 5 numbered
+fixes (*"I will not approve a sketch"*) → draft v2 addresses every one (exact
+route, real distance/gain, weather thresholds, gear, a noon turnaround + Wright
+Peak bailout) → the critic approves and `exit_loop`s. Also serves in the Dev UI
+(`go run ./loopcritic web -port 8793 webui -api_server_address http://localhost:8793/api api`).
 
 ## Anatomy (the v2 pieces)
 
