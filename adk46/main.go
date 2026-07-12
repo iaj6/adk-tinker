@@ -29,6 +29,8 @@ import (
 	"google.golang.org/adk/v2/agent"
 	"google.golang.org/adk/v2/agent/llmagent"
 	"google.golang.org/adk/v2/agent/workflowagent"
+	"google.golang.org/adk/v2/cmd/launcher"
+	"google.golang.org/adk/v2/cmd/launcher/full"
 	"google.golang.org/adk/v2/model"
 	"google.golang.org/adk/v2/runner"
 	"google.golang.org/adk/v2/session"
@@ -245,6 +247,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to build trip planner: %v", err)
 	}
+
+	// Dev UI / interactive console: hand the workflow agent to the launcher.
+	//   go run ./adk46 web -port 8793 webui -api_server_address http://localhost:8793/api api
+	//   → open http://localhost:8793/ui/   (or: go run ./adk46 console)
+	if len(os.Args) > 1 && (os.Args[1] == "web" || os.Args[1] == "console") {
+		l := full.NewLauncher()
+		if err := l.Execute(ctx, &launcher.Config{AgentLoader: agent.NewSingleLoader(root)}, os.Args[1:]); err != nil {
+			log.Fatalf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+		}
+		return
+	}
+
 	r, err := runner.New(runner.Config{
 		AppName:           appName,
 		Agent:             root,

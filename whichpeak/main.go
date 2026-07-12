@@ -20,6 +20,8 @@ import (
 
 	"google.golang.org/adk/v2/agent"
 	"google.golang.org/adk/v2/agent/llmagent"
+	"google.golang.org/adk/v2/cmd/launcher"
+	"google.golang.org/adk/v2/cmd/launcher/full"
 	"google.golang.org/adk/v2/runner"
 	"google.golang.org/adk/v2/session"
 	"google.golang.org/adk/v2/tool"
@@ -49,6 +51,16 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("failed to create agent: %v", err)
+	}
+
+	// Dev UI / interactive console: chat with the Oracle in the browser.
+	//   go run ./whichpeak web -port 8793 webui -api_server_address http://localhost:8793/api api
+	if len(os.Args) > 1 && (os.Args[1] == "web" || os.Args[1] == "console") {
+		l := full.NewLauncher()
+		if err := l.Execute(ctx, &launcher.Config{AgentLoader: agent.NewSingleLoader(oracle)}, os.Args[1:]); err != nil {
+			log.Fatalf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+		}
+		return
 	}
 
 	const appName, userID, sessionID = "whichpeak", "hiker", "s1"

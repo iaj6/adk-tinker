@@ -32,6 +32,8 @@ import (
 	"google.golang.org/adk/v2/agent"
 	"google.golang.org/adk/v2/agent/llmagent"
 	"google.golang.org/adk/v2/agent/remoteagent/v2"
+	"google.golang.org/adk/v2/cmd/launcher"
+	"google.golang.org/adk/v2/cmd/launcher/full"
 	"google.golang.org/adk/v2/model/gemini"
 	"google.golang.org/adk/v2/runner"
 	"google.golang.org/adk/v2/server/adka2a/v2"
@@ -107,6 +109,17 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("guide agent: %v", err)
+	}
+
+	// Dev UI / interactive console: chat with the guide in the browser; it
+	// consults the Gemini ranger (still served in the goroutine above) over A2A.
+	//   go run ./rangerguide web -port 8793 webui -api_server_address http://localhost:8793/api api
+	if len(os.Args) > 1 && (os.Args[1] == "web" || os.Args[1] == "console") {
+		l := full.NewLauncher()
+		if err := l.Execute(ctx, &launcher.Config{AgentLoader: agent.NewSingleLoader(guide)}, os.Args[1:]); err != nil {
+			log.Fatalf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+		}
+		return
 	}
 
 	// --- Run one turn and trace the cross-provider hop ---
